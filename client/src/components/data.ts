@@ -1,4 +1,4 @@
-export const data = [
+export const stringData = [
   "Alfalfa Sprouts",
   "Apple",
   "Apricot",
@@ -132,4 +132,47 @@ export const data = [
   "Yellow Squash",
   "Yuca/Cassava",
   "Zucchini Squash",
+];
+
+export const objectData = [
+  {
+    name: "Apple",
+    category: "Fruit",
+  },
+  {
+    name: "Banana",
+    category: "Fruit",
+  },
+  {
+    name: "Carrot",
+    category: "Vegetable",
+  },
+  {
+    name: "Dragonfruit",
+    category: "Fruit",
+  },
+  {
+    name: "Eggplant",
+    category: "Vegetable",
+  },
+  {
+    name: "Fig",
+    category: "Fruit",
+  },
+  {
+    name: "Grape",
+    category: "Fruit",
+  },
+  {
+    name: "Honeydew",
+    category: "Fruit",
+  },
+  {
+    name: "Iceberg Lettuce",
+    category: "Vegetable",
+  },
+  {
+    name: "Jackfruit",
+    category: "Fruit",
+  },
 ];

@@ -1,114 +1,189 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   useFloating,
-  shift,
   offset,
+  flip,
+  size,
   FloatingPortal,
   FloatingFocusManager,
+  autoUpdate,
+  useRole,
+  useDismiss,
+  useListNavigation,
+  useInteractions,
 } from "@floating-ui/react";
 import { AutocompleteProps, Option } from "./types";
+import { debounce } from "./helpers";
 
 const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
   label,
+  loading,
   description,
   disabled = false,
   filterOptions,
-  loading = true,
-  multiple = false,
+  multiple,
   onChange,
   onInputChange,
   options,
-  placeholder = "Search",
+  placeholder,
   renderOption,
   value,
+  setValue,
+  async,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const { x, y, strategy, reference, floating, context } = useFloating({
-    middleware: [offset(5), shift()],
-    placement: "bottom-start",
+  const listRef = useRef<Array<HTMLElement | null>>([]);
+
+  const { refs, floatingStyles, context } = useFloating<HTMLInputElement>({
+    whileElementsMounted: autoUpdate,
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    middleware: [
+      offset(5),
+      flip({ padding: 10 }),
+      size({
+        apply({ rects, availableHeight, elements }) {
+          Object.assign(elements.floating.style, {
+            width: `${rects.reference.width}px`,
+            maxHeight: `${availableHeight}px`,
+          });
+        },
+        padding: 10,
+      }),
+    ],
   });
+
+  const role = useRole(context, { role: "listbox" });
+  const dismiss = useDismiss(context);
+  const listNav = useListNavigation(context, {
+    listRef,
+    activeIndex,
+    onNavigate: setActiveIndex,
+    virtual: true,
+    loop: true,
+  });
+
+  const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions(
+    [role, dismiss, listNav]
+  );
+
+  // debouce here?
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    setIsOpen(true);
+    setActiveIndex(0);
+  };
+
+  const debouncedHandleInputChange = debounce(handleInputChange, 300);
+
+  const handleOptionClick = (option: Option) => {
+    if (multiple) {
+      if (!value) {
+        onChange([option]);
+      } else if (value.includes(option)) {
+        onChange(value.filter((v) => v !== option));
+      } else {
+        onChange([...value, option]);
+      }
+    } else {
+      onChange(option);
+      if (typeof option === "string") {
+        setInputValue(option);
+      }
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (multiple) {
+      setValue([]);
+    } else {
+      setValue("");
+    }
+  }, []);
 
   useEffect(() => {
     if (onInputChange) {
       onInputChange(inputValue);
     }
 
-    if (filterOptions) {
-      setFilteredOptions(filterOptions(options, inputValue));
-    } else {
-      // Default filtering logic for string options
-      if (typeof options[0] === "string") {
-        setFilteredOptions(
-          options.filter((option) =>
-            (option as string).toLowerCase().includes(inputValue.toLowerCase())
-          )
-        );
-      } else {
-        // Implement custom filtering logic for object options if necessary
-        setFilteredOptions(options);
-      }
-    }
+    setFilteredOptions(filterOptions(options, inputValue));
   }, [inputValue, options, filterOptions, onInputChange]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    setIsOpen(true);
-  };
-
-  const handleOptionClick = (option: Option) => {
-    if (multiple && Array.isArray(value)) {
-      const newValue = value.includes(option)
-        ? value.filter((item) => item !== option)
-        : [...value, option];
-      onChange(newValue);
-    } else {
-      onChange(option);
-      setIsOpen(false);
-    }
-    setInputValue(""); // Clear input after selection
-  };
-
-  const renderDefaultOption = (option: Option) => {
-    if (typeof option === "string") {
-      return <div className="p-2 hover:bg-gray-200">{option}</div>;
-    } else {
-      // Customize based on object structure
-      return (
-        <div className="p-2 hover:bg-gray-200">{JSON.stringify(option)}</div>
-      );
-    }
-  };
 
   return (
     <div className="relative">
       <p className="py-2">{label}</p>
       <input
-        className="p-2 w-full focus:outline-orange-300 rounded-sm"
-        type="text"
-        placeholder={placeholder}
-        disabled={disabled}
-        value={inputValue}
-        onChange={handleInputChange}
-        onFocus={() => setIsOpen(true)}
+        {...getReferenceProps({
+          ref: refs.setReference,
+          value: inputValue,
+          onChange: handleInputChange,
+          placeholder: placeholder,
+          disabled: disabled,
+          "aria-autocomplete": "list",
+          className: "p-2 w-full focus:outline-orange-300 rounded-sm",
+          onKeyDown(event) {
+            if (
+              event.key === "Enter" &&
+              activeIndex != null &&
+              filteredOptions[activeIndex]
+            ) {
+              handleOptionClick(filteredOptions[activeIndex]);
+            }
+          },
+          onFocus() {
+            setIsOpen(true);
+          },
+        })}
       />
       {loading && <div id="spinner" />}
-      {isOpen && (
-        <FloatingFocusManager context={context}>
-          <FloatingPortal>
-            {filteredOptions.map((option, index) => (
-              <div key={index} onClick={() => handleOptionClick(option)}>
-                {renderOption
-                  ? renderOption(option)
-                  : renderDefaultOption(option)}
-              </div>
-            ))}
-          </FloatingPortal>
-        </FloatingFocusManager>
-      )}
-      <p className="py-2">{description}</p>
+
+      <FloatingPortal>
+        {isOpen && (
+          <FloatingFocusManager
+            context={context}
+            initialFocus={-1}
+            visuallyHiddenDismiss
+          >
+            <div
+              {...getFloatingProps({
+                ref: refs.setFloating,
+                style: {
+                  ...floatingStyles,
+                  background: "#eee",
+                  color: "black",
+                  overflowY: "auto",
+                },
+              })}
+            >
+              {filteredOptions.map((option, index) => (
+                <div
+                  key={index}
+                  {...getItemProps({
+                    ref(node) {
+                      listRef.current[index] = node;
+                    },
+                    onClick() {
+                      handleOptionClick(option);
+                      refs.domReference.current?.focus();
+                    },
+                    className: `p-2 hover:bg-orange-400 flex items-center ${
+                      activeIndex === index ? "bg-orange-400 text-white" : ""
+                    }`,
+                  })}
+                >
+                  {renderOption(option, multiple)}
+                </div>
+              ))}
+            </div>
+          </FloatingFocusManager>
+        )}
+      </FloatingPortal>
+      <p className="py-2 text-sm">{description}</p>
     </div>
   );
 };
