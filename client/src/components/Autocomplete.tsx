@@ -1,23 +1,22 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   useFloating,
   offset,
-  flip,
   size,
   FloatingPortal,
   FloatingFocusManager,
   autoUpdate,
-  useRole,
   useDismiss,
   useListNavigation,
   useInteractions,
+  useFocus,
 } from "@floating-ui/react";
 import { AutocompleteProps, Option } from "./types";
 import { debounce } from "./helpers";
 
 const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
   label,
-  loading = true,
+  loading = false,
   description,
   disabled = false,
   filterOptions,
@@ -27,10 +26,10 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
   placeholder,
   renderOption,
   value,
-  setValue,
   debounceValue = 0,
+  setLoading,
 }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(multiple ? [] : "");
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -43,7 +42,6 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
     onOpenChange: setIsOpen,
     middleware: [
       offset(5),
-      flip({ padding: 10 }),
       size({
         apply({ rects, availableHeight, elements }) {
           Object.assign(elements.floating.style, {
@@ -56,7 +54,7 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
     ],
   });
 
-  const role = useRole(context, { role: "listbox" });
+  const focus = useFocus(context);
   const dismiss = useDismiss(context);
   const listNav = useListNavigation(context, {
     listRef,
@@ -67,20 +65,25 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
   });
 
   const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions(
-    [role, dismiss, listNav]
+    [dismiss, listNav, focus]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    setIsOpen(true);
     setActiveIndex(0);
+    if (setLoading) {
+      setLoading(true);
+    }
     debouncedFilterOptions(newValue);
   };
 
   const debouncedFilterOptions = useCallback(
     debounce((value: string) => {
       setFilteredOptions(filterOptions(options, value));
+      if (setLoading) {
+        setLoading(false);
+      }
     }, debounceValue),
     [options, filterOptions]
   );
@@ -89,56 +92,49 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
     if (multiple) {
       if (!value) {
         onChange([option]);
-      } else if (value.includes(option)) {
-        onChange(value.filter((v) => v !== option));
+      } else if ((value as Option[]).includes(option)) {
+        onChange((value as Option[]).filter((v) => v !== option));
       } else {
-        onChange([...value, option]);
+        onChange([...(value as Option[]), option]);
       }
     } else {
       onChange(option);
       if (typeof option === "string") {
         setInputValue(option);
       }
-      setIsOpen(false);
     }
   };
-
-  useEffect(() => {
-    if (multiple) {
-      setValue([]);
-    } else {
-      setValue("");
-    }
-  }, []);
 
   return (
     <div className="relative">
       <p className="py-2">{label}</p>
-      <input
-        {...getReferenceProps({
-          ref: refs.setReference,
-          value: inputValue,
-          onChange: handleInputChange,
-          placeholder: placeholder,
-          disabled: disabled,
-          "aria-autocomplete": "list",
-          className: "p-2 w-full focus:outline-orange-300 rounded-sm",
-          onKeyDown(event) {
-            if (
-              event.key === "Enter" &&
-              activeIndex != null &&
-              filteredOptions[activeIndex]
-            ) {
-              handleOptionClick(filteredOptions[activeIndex]);
-            }
-          },
-          onFocus() {
-            setIsOpen(true);
-          },
-        })}
-      />
-
-      {loading && <div id="spinner">test</div>}
+      <div>
+        <input
+          {...getReferenceProps({
+            ref: refs.setReference,
+            value: inputValue,
+            onChange: handleInputChange,
+            placeholder: placeholder,
+            disabled: disabled,
+            "aria-autocomplete": "list",
+            className: "p-2 w-full focus:outline-orange-300 rounded-sm",
+            onKeyDown(event) {
+              if (
+                event.key === "Enter" &&
+                activeIndex != null &&
+                filteredOptions[activeIndex]
+              ) {
+                handleOptionClick(filteredOptions[activeIndex]);
+              }
+            },
+          })}
+        />
+        {loading && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+            <div className="w-5 h-5 border-2 border-t-transparent border-orange-400 rounded-full animate-spin"></div>
+          </div>
+        )}
+      </div>
       <FloatingPortal>
         {isOpen && (
           <FloatingFocusManager
@@ -166,7 +162,6 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
                     },
                     onClick() {
                       handleOptionClick(option);
-                      refs.domReference.current?.focus();
                     },
                     className: `p-2 hover:bg-orange-400 flex items-center ${
                       activeIndex === index ? "bg-orange-400 text-white" : ""

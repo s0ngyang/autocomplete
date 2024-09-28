@@ -13,8 +13,8 @@ interface AutocompleteProps<T> {
   placeholder?: string;
   renderOption: (option: T, multiple: boolean) => React.ReactNode;
   value?: T | T[];
-  setValue: React.Dispatch<React.SetStateAction<T | T[]>>;
   debounceValue?: number;
+  setLoading?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type Option = string | object;

@@ -136,43 +136,43 @@ export const stringData = [
 
 export const objectData = [
   {
-    name: "Apple",
-    category: "Fruit",
+    Name: "Apple",
+    Category: "Fruit",
   },
   {
-    name: "Banana",
-    category: "Fruit",
+    Name: "Banana",
+    Category: "Fruit",
   },
   {
-    name: "Carrot",
-    category: "Vegetable",
+    Name: "Carrot",
+    Category: "Vegetable",
   },
   {
-    name: "Dragonfruit",
-    category: "Fruit",
+    Name: "Dragonfruit",
+    Category: "Fruit",
   },
   {
-    name: "Eggplant",
-    category: "Vegetable",
+    Name: "Eggplant",
+    Category: "Vegetable",
   },
   {
-    name: "Fig",
-    category: "Fruit",
+    Name: "Fig",
+    Category: "Fruit",
   },
   {
-    name: "Grape",
-    category: "Fruit",
+    Name: "Grape",
+    Category: "Fruit",
   },
   {
-    name: "Honeydew",
-    category: "Fruit",
+    Name: "Honeydew",
+    Category: "Fruit",
   },
   {
-    name: "Iceberg Lettuce",
-    category: "Vegetable",
+    Name: "Iceberg Lettuce",
+    Category: "Vegetable",
   },
   {
-    name: "Jackfruit",
-    category: "Fruit",
+    Name: "Jackfruit",
+    Category: "Fruit",
   },
 ];

@@ -5,7 +5,6 @@ import { stringData, objectData } from "./components/data";
 import { Option } from "./components/types";
 
 function App() {
-  // for debounce
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState<Option | Option[]>();
 
@@ -35,7 +34,12 @@ function App() {
     return (
       <div className="px-1 hover:bg-orange-400 flex items-center">
         {multiple && (
-          <input type="checkbox" checked={isSelected} className="mr-2" />
+          <input
+            type="checkbox"
+            checked={isSelected}
+            readOnly
+            className="mr-2"
+          />
         )}
         <span>
           {typeof option === "string" ? (
@@ -57,15 +61,13 @@ function App() {
   return (
     <div className="p-2">
       <Autocomplete
-        loading={loading}
         options={stringData}
         onChange={handleChange}
         value={value}
         multiple={false}
         filterOptions={filterOptions}
-        setValue={setValue}
         renderOption={renderOption}
-        label="Sync Search"
+        label="Sync String Search (Single)"
         description="Search for fruits"
         placeholder="Search"
       />
@@ -76,12 +78,12 @@ function App() {
         value={value}
         multiple
         filterOptions={filterOptions}
-        setValue={setValue}
         renderOption={renderOption}
-        label="Async (Debounced) Search"
+        label="Debounced Object Search (Multiple)"
         description="Search for fruit objects"
         placeholder="Search"
         debounceValue={300}
+        setLoading={setLoading}
       />
     </div>
   );
