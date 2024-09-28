@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   useFloating,
   offset,
@@ -17,19 +17,18 @@ import { debounce } from "./helpers";
 
 const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
   label,
-  loading,
+  loading = true,
   description,
   disabled = false,
   filterOptions,
   multiple,
   onChange,
-  onInputChange,
   options,
   placeholder,
   renderOption,
   value,
   setValue,
-  async,
+  debounceValue = 0,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [filteredOptions, setFilteredOptions] = useState(options);
@@ -71,14 +70,20 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
     [role, dismiss, listNav]
   );
 
-  // debouce here?
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
     setIsOpen(true);
     setActiveIndex(0);
+    debouncedFilterOptions(newValue);
   };
 
-  const debouncedHandleInputChange = debounce(handleInputChange, 300);
+  const debouncedFilterOptions = useCallback(
+    debounce((value: string) => {
+      setFilteredOptions(filterOptions(options, value));
+    }, debounceValue),
+    [options, filterOptions]
+  );
 
   const handleOptionClick = (option: Option) => {
     if (multiple) {
@@ -106,14 +111,6 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (onInputChange) {
-      onInputChange(inputValue);
-    }
-
-    setFilteredOptions(filterOptions(options, inputValue));
-  }, [inputValue, options, filterOptions, onInputChange]);
-
   return (
     <div className="relative">
       <p className="py-2">{label}</p>
@@ -140,8 +137,8 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
           },
         })}
       />
-      {loading && <div id="spinner" />}
 
+      {loading && <div id="spinner">test</div>}
       <FloatingPortal>
         {isOpen && (
           <FloatingFocusManager

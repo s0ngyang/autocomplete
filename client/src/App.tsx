@@ -13,10 +13,6 @@ function App() {
     setValue(value);
   };
 
-  const handleInputChange = (input: string) => {
-    console.log("Input changed:", input);
-  };
-
   const filterOptions = (options: Option[], query: string) => {
     if (typeof options[0] === "string") {
       return options.filter((option) =>
@@ -64,7 +60,6 @@ function App() {
         loading={loading}
         options={stringData}
         onChange={handleChange}
-        onInputChange={handleInputChange}
         value={value}
         multiple={false}
         filterOptions={filterOptions}
@@ -78,7 +73,6 @@ function App() {
         loading={loading}
         options={objectData}
         onChange={handleChange}
-        onInputChange={handleInputChange}
         value={value}
         multiple
         filterOptions={filterOptions}
@@ -87,6 +81,7 @@ function App() {
         label="Async (Debounced) Search"
         description="Search for fruit objects"
         placeholder="Search"
+        debounceValue={300}
       />
     </div>
   );
