@@ -2,6 +2,8 @@
 
 Beep FE SWE Intern Take Home
 
+Deployment: <https://gregarious-travesseiro-7b5dba.netlify.app/>
+
 ### Getting started
 
 1. `npm install`

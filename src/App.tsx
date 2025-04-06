@@ -1,8 +1,8 @@
 import "./App.css";
-import Autocomplete from "./components/Autocomplete";
+import { Autocomplete } from "./components/Autocomplete";
 import { useState } from "react";
-import { stringData, objectData } from "./components/data";
-import { Option } from "./components/types";
+import { stringData, objectData } from "./data";
+import { Option } from "./components/Autocomplete";
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,6 @@ function App() {
         options={stringData}
         onChange={handleChange}
         value={value}
-        multiple={false}
         filterOptions={filterOptions}
         renderOption={renderOption}
         label="Sync String Search (Single)"

@@ -11,16 +11,33 @@ import {
   useInteractions,
   useFocus,
 } from "@floating-ui/react";
-import { AutocompleteProps, Option } from "./types";
-import { debounce } from "./helpers";
+import { debounce } from "../helpers";
 
-const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
+interface AutocompleteProps<T> {
+  label?: string;
+  description?: string;
+  disabled?: boolean;
+  filterOptions: (options: T[], query: string) => T[];
+  loading?: boolean;
+  multiple?: boolean;
+  onChange: (value: T | T[]) => void;
+  options: T[];
+  placeholder?: string;
+  renderOption: (option: T, multiple: boolean) => React.ReactNode;
+  value?: T | T[];
+  debounceValue?: number;
+  setLoading?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export type Option = string | object;
+
+export const Autocomplete = ({
   label,
   loading = false,
   description,
   disabled = false,
   filterOptions,
-  multiple,
+  multiple = false,
   onChange,
   options,
   placeholder,
@@ -28,7 +45,7 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
   value,
   debounceValue = 0,
   setLoading,
-}) => {
+}: AutocompleteProps<Option>) => {
   const [inputValue, setInputValue] = useState(multiple ? [] : "");
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [isOpen, setIsOpen] = useState(false);
@@ -85,7 +102,7 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
         setLoading(false);
       }
     }, debounceValue),
-    [options, filterOptions]
+    [options]
   );
 
   const handleOptionClick = (option: Option) => {
@@ -114,10 +131,10 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
             ref: refs.setReference,
             value: inputValue,
             onChange: handleInputChange,
-            placeholder: placeholder,
-            disabled: disabled,
+            placeholder,
+            disabled,
             "aria-autocomplete": "list",
-            className: "p-2 w-full focus:outline-orange-300 rounded-sm",
+            className: "p-2 w-full focus:outline-orange-300 rounded-full",
             onKeyDown(event) {
               if (
                 event.key === "Enter" &&
@@ -179,5 +196,3 @@ const Autocomplete: React.FC<AutocompleteProps<Option>> = ({
     </div>
   );
 };
-
-export default Autocomplete;
