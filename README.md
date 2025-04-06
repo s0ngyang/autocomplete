@@ -14,12 +14,6 @@ Deployment: <https://gregarious-travesseiro-7b5dba.netlify.app/>
 
 - onInputChange was removed. It is implemented in the Autocorrect component as it captures many internal states within the component, given my implementation.
 
-### UI refinements that I did not implement
-
-- Options should close after clicking for single mode
-- Unhover when using arrow keys to navigate
-- Escape should blur input on top of closing options
-
 ## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
